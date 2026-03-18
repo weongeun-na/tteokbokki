@@ -2,8 +2,19 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>떡볶이 패스 - 출석 & 포인트</title>
+    
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=2">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=2">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="떡볶이 패스">
+    <meta name="mobile-web-app-capable" content="yes">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -27,9 +38,9 @@
 
     <div class="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-orange-100">
         <h2 class="font-bold text-gray-700 mb-3">새 친구 등록</h2>
-        <div class="flex gap-2">
-            <input type="text" id="studentName" placeholder="학생 이름 입력" class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-400">
-            <button onclick="addStudent()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg transition">등록</button>
+        <div class="flex gap-2 items-center w-full">
+            <input type="text" id="studentName" placeholder="학생 이름 입력" class="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-red-400">
+            <button onclick="addStudent()" class="bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 px-4 rounded-lg whitespace-nowrap transition">등록</button>
         </div>
     </div>
 
@@ -67,11 +78,7 @@
             const name = nameInput.value.trim();
             if (!name) return alert('이름을 입력해주세요!');
 
-            const newStudent = {
-                id: 'STU_' + Date.now(), 
-                name: name,
-                points: 0
-            };
+            const newStudent = { id: 'STU_' + Date.now(), name: name, points: 0 };
             students.push(newStudent);
             nameInput.value = '';
             saveAndRender();
@@ -79,10 +86,7 @@
 
         function addPoints(id, amount) {
             const student = students.find(s => s.id === id);
-            if (student) {
-                student.points += amount;
-                saveAndRender();
-            }
+            if (student) { student.points += amount; saveAndRender(); }
         }
 
         function redeemPoints(id, amount) {
@@ -100,7 +104,6 @@
         function renderStudents() {
             const list = document.getElementById('studentList');
             list.innerHTML = '';
-
             if (students.length === 0) {
                 list.innerHTML = '<p class="text-gray-400 text-center py-4">아직 등록된 학생이 없습니다.</p>';
                 return;
@@ -115,9 +118,9 @@
                         <span class="bg-red-100 text-red-600 font-bold px-3 py-1 rounded-full text-sm">${student.points} P</span>
                     </div>
                     <div class="flex gap-2 text-sm">
-                        <button onclick="addPoints('${student.id}', 10)" class="flex-1 bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 font-medium py-1.5 rounded">수동출석 (+10P)</button>
-                        <button onclick="redeemPoints('${student.id}', 50)" class="flex-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 font-medium py-1.5 rounded">선물 (-50P)</button>
-                        <button onclick="showQR('${student.id}', '${student.name}')" class="flex-1 bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 font-medium py-1.5 rounded">내 QR보기</button>
+                        <button onclick="addPoints('${student.id}', 10)" class="flex-1 bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 font-medium py-1.5 rounded text-center whitespace-nowrap">수동출석</button>
+                        <button onclick="redeemPoints('${student.id}', 50)" class="flex-1 bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 font-medium py-1.5 rounded text-center whitespace-nowrap">선물교환</button>
+                        <button onclick="showQR('${student.id}', '${student.name}')" class="flex-1 bg-gray-50 text-gray-600 border border-gray-200 hover:bg-gray-100 font-medium py-1.5 rounded text-center whitespace-nowrap">QR보기</button>
                     </div>
                 `;
                 list.appendChild(item);
@@ -127,51 +130,33 @@
         function showQR(id, name) {
             document.getElementById('qrModalTitle').innerText = `${name} 학생의 QR코드`;
             document.getElementById('qrcode').innerHTML = ''; 
-            new QRCode(document.getElementById("qrcode"), {
-                text: id, 
-                width: 150, height: 150,
-                colorDark : "#000000", colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
-            });
+            new QRCode(document.getElementById("qrcode"), { text: id, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
             document.getElementById('qrModal').classList.remove('hidden');
         }
 
-        function closeQrModal() {
-            document.getElementById('qrModal').classList.add('hidden');
-        }
+        function closeQrModal() { document.getElementById('qrModal').classList.add('hidden'); }
 
         function openScanner() {
             document.getElementById('scannerModal').classList.remove('hidden');
             html5QrcodeScanner = new Html5Qrcode("reader");
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
             html5QrcodeScanner.start({ facingMode: "environment" }, config, onScanSuccess)
-            .catch(err => {
-                alert("카메라를 사용할 수 없습니다. 권한을 허용했는지 확인해주세요.");
-                closeScanner();
-            });
+            .catch(err => { alert("카메라 권한을 허용해주세요."); closeScanner(); });
         }
 
         function onScanSuccess(decodedText, decodedResult) {
             const student = students.find(s => s.id === decodedText);
-            
             if(student) {
                 html5QrcodeScanner.stop().then(() => {
-                    closeScanner();
-                    student.points += 10;
-                    saveAndRender();
-                    alert(`🎉 ${student.name} 학생 출석 확인! 10포인트가 적립되었습니다.`);
+                    closeScanner(); student.points += 10; saveAndRender();
+                    alert(`🎉 ${student.name} 학생 출석 확인! 10포인트 적립!`);
                 }).catch(err => console.error(err));
-            } else {
-                alert("등록되지 않은 QR코드이거나 잘못된 코드입니다.");
-            }
+            } else { alert("등록되지 않은 학생입니다."); }
         }
 
         function closeScanner() {
             document.getElementById('scannerModal').classList.add('hidden');
-            if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(e => console.log("스캐너 중지 오류:", e));
-            }
+            if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e => console.log(e));
         }
 
         renderStudents();
