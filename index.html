@@ -124,9 +124,10 @@
             document.getElementById('qrcode').innerHTML = ''; 
             new QRCode(document.getElementById("qrcode"), { text: id, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
             
-            // 학생에게 보낼 개인 링크 생성하기
-            const baseUrl = window.location.href.split('index.html')[0].replace(/\/$/, ""); 
-            currentShareLink = `${baseUrl}/student.html?id=${id}&name=${encodeURIComponent(name)}`;
+            // ★ 오류가 났던 주소 생성 부분을 아주 튼튼하게 고쳤습니다! ★
+            let path = window.location.pathname.replace("index.html", "");
+            if (!path.endsWith("/")) path += "/";
+            currentShareLink = window.location.origin + path + "student.html?id=" + id + "&name=" + encodeURIComponent(name);
             
             document.getElementById('qrModal').classList.remove('hidden');
         }
