@@ -4,17 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>떡볶이 패스 - 출석 & 포인트</title>
-    
     <link rel="manifest" href="manifest.json">
-    
     <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=2">
     <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=2">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="떡볶이 패스">
-    <meta name="mobile-web-app-capable" content="yes">
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -27,7 +21,7 @@
 
     <div class="tteokbokki-gradient text-white rounded-2xl p-6 mb-6 shadow-lg text-center">
         <h1 class="text-2xl font-bold mb-2">🍡 떡볶이 패스</h1>
-        <p class="text-sm opacity-90">중등부 방과후 모임 출석부</p>
+        <p class="text-sm opacity-90">선생님 관리용 출석부</p>
     </div>
 
     <div class="mb-6 flex justify-center">
@@ -53,7 +47,10 @@
         <div class="bg-white rounded-2xl p-6 text-center max-w-sm w-full">
             <h3 id="qrModalTitle" class="font-bold text-xl mb-4 text-gray-800"></h3>
             <div id="qrcode" class="flex justify-center mb-6"></div>
-            <p class="text-sm text-gray-500 mb-4">이 QR코드를 캡처해서 학생에게 보내주세요!</p>
+            
+            <button onclick="copyStudentLink()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg mb-3 shadow-sm">
+                🔗 학생에게 앱 링크 카톡으로 보내기
+            </button>
             <button onclick="closeQrModal()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg">닫기</button>
         </div>
     </div>
@@ -67,6 +64,7 @@
     <script>
         let students = JSON.parse(localStorage.getItem('tteokbokki_students')) || [];
         let html5QrcodeScanner = null;
+        let currentShareLink = ""; 
 
         function saveAndRender() {
             localStorage.setItem('tteokbokki_students', JSON.stringify(students));
@@ -77,7 +75,6 @@
             const nameInput = document.getElementById('studentName');
             const name = nameInput.value.trim();
             if (!name) return alert('이름을 입력해주세요!');
-
             const newStudent = { id: 'STU_' + Date.now(), name: name, points: 0 };
             students.push(newStudent);
             nameInput.value = '';
@@ -96,18 +93,13 @@
                     student.points -= amount;
                     saveAndRender();
                 }
-            } else {
-                alert('포인트가 부족합니다!');
-            }
+            } else { alert('포인트가 부족합니다!'); }
         }
 
         function renderStudents() {
             const list = document.getElementById('studentList');
             list.innerHTML = '';
-            if (students.length === 0) {
-                list.innerHTML = '<p class="text-gray-400 text-center py-4">아직 등록된 학생이 없습니다.</p>';
-                return;
-            }
+            if (students.length === 0) { list.innerHTML = '<p class="text-gray-400 text-center py-4">아직 등록된 학생이 없습니다.</p>'; return; }
 
             students.forEach(student => {
                 const item = document.createElement('div');
@@ -131,7 +123,20 @@
             document.getElementById('qrModalTitle').innerText = `${name} 학생의 QR코드`;
             document.getElementById('qrcode').innerHTML = ''; 
             new QRCode(document.getElementById("qrcode"), { text: id, width: 150, height: 150, colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.H });
+            
+            // 학생에게 보낼 개인 링크 생성하기
+            const baseUrl = window.location.href.split('index.html')[0].replace(/\/$/, ""); 
+            currentShareLink = `${baseUrl}/student.html?id=${id}&name=${encodeURIComponent(name)}`;
+            
             document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function copyStudentLink() {
+            navigator.clipboard.writeText(currentShareLink).then(() => {
+                alert('복사되었습니다! 카카오톡 채팅창에 붙여넣기 해서 학생에게 보내주세요.');
+            }).catch(err => {
+                alert('복사 실패. 다시 시도해주세요.');
+            });
         }
 
         function closeQrModal() { document.getElementById('qrModal').classList.add('hidden'); }
