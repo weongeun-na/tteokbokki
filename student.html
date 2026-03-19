@@ -4,8 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
-    <link rel="manifest" href="manifest.json">
+    
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=6">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=6">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
@@ -40,18 +44,21 @@
             messagingSenderId: "117450022544",
             appId: "1:117450022544:web:d93b193e236d3398218215"
         };
-        firebase.initializeApp(firebaseConfig);
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
+        // 2. 바탕화면 앱이 길을 잃지 않도록, 주소창의 꼬리표를 절대 지우지 않습니다!
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('id')) {
-            localStorage.setItem('my_pass_id', urlParams.get('id'));
-            localStorage.setItem('my_pass_name', urlParams.get('name'));
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
+        let myId = urlParams.get('id');
+        let myName = urlParams.get('name');
 
-        const myId = localStorage.getItem('my_pass_id');
-        const myName = localStorage.getItem('my_pass_name');
+        if (myId && myName) {
+            localStorage.setItem('my_pass_id', myId);
+            localStorage.setItem('my_pass_name', myName);
+        } else {
+            myId = localStorage.getItem('my_pass_id');
+            myName = localStorage.getItem('my_pass_name');
+        }
 
         if (myId && myName) {
             document.getElementById('studentName').innerText = myName;
@@ -60,7 +67,11 @@
             // 클라우드에서 실시간 포인트 수신
             db.ref('students/' + myId).on('value', (snapshot) => {
                 const data = snapshot.val();
-                if(data) document.getElementById('pointsDisplay').innerText = data.points + " P";
+                if(data) {
+                    document.getElementById('pointsDisplay').innerText = data.points + " P";
+                } else {
+                    document.getElementById('pointsDisplay').innerText = "0 P";
+                }
             });
         }
     </script>
