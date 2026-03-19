@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>떡볶이 패스 - 출석부</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=3">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=3">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=5">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=5">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -52,7 +52,9 @@
     </div>
 
     <script>
-        // 파이어베이스 설정 및 연결
+        // 에러를 화면에 띄워주는 안전장치
+        window.onerror = function(msg) { alert("코드 오류가 있습니다 다시 복사해주세요: " + msg); };
+
         const firebaseConfig = {
             apiKey: "AIzaSyCgqbnQUuipS1iDMO7tUVgE-3L0c9SzbdY",
             authDomain: "tteokbokki-373b3.firebaseapp.com",
@@ -62,14 +64,14 @@
             messagingSenderId: "117450022544",
             appId: "1:117450022544:web:d93b193e236d3398218215"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
         let students = [];
         let html5QrcodeScanner = null;
         let currentShareLink = ""; 
 
-        // 실시간 데이터 불러오기
         db.ref('students').on('value', (snapshot) => {
             students = [];
             snapshot.forEach((child) => { students.push(child.val()); });
@@ -78,10 +80,13 @@
 
         function addStudent() {
             const name = document.getElementById('studentName').value.trim();
-            if (!name) return;
+            if (!name) { alert("이름을 입력해주세요!"); return; }
             const id = 'STU_' + Date.now();
-            db.ref('students/' + id).set({ id: id, name: name, points: 0 });
-            document.getElementById('studentName').value = '';
+            
+            // 데이터베이스 저장 성공/실패 확인
+            db.ref('students/' + id).set({ id: id, name: name, points: 0 })
+              .then(() => { document.getElementById('studentName').value = ''; })
+              .catch((error) => { alert("데이터베이스 연결 실패! 주소나 규칙을 확인하세요."); });
         }
 
         function addPoints(id, amount) {
@@ -101,6 +106,8 @@
         function renderStudents() {
             const list = document.getElementById('studentList');
             list.innerHTML = '';
+            if (students.length === 0) { list.innerHTML = '<p class="text-gray-400 text-center py-4">등록된 학생이 없습니다.</p>'; return; }
+            
             students.forEach(student => {
                 list.innerHTML += `
                     <div class="border-b pb-4 mb-4">
@@ -111,4 +118,47 @@
                         <div class="flex gap-2 text-sm">
                             <button onclick="addPoints('${student.id}', 10)" class="flex-1 bg-green-50 text-green-600 border border-green-200 py-1.5 rounded">수동출석</button>
                             <button onclick="redeemPoints('${student.id}', 50)" class="flex-1 bg-blue-50 text-blue-600 border border-blue-200 py-1.5 rounded">선물교환</button>
-                            <button onclick="showQR('${student.id}', '${student.name}')" class="flex-1 bg-gray-50 border py-1.5
+                            <button onclick="showQR('${student.id}', '${student.name}')" class="flex-1 bg-gray-50 border py-1.5 rounded">QR보기</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function showQR(id, name) {
+            document.getElementById('qrModalTitle').innerText = `${name} 학생`;
+            document.getElementById('qrcode').innerHTML = ''; 
+            new QRCode(document.getElementById("qrcode"), { text: id, width: 150, height: 150 });
+            let path = window.location.pathname.replace("index.html", "");
+            if (!path.endsWith("/")) path += "/";
+            currentShareLink = `${name} 학생증\n${window.location.origin}${path}student.html?id=${id}&name=${encodeURIComponent(name)}`;
+            document.getElementById('qrModal').classList.remove('hidden');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(currentShareLink).then(() => alert('복사완료! 카톡에 붙여넣으세요.'));
+        }
+        function closeQrModal() { document.getElementById('qrModal').classList.add('hidden'); }
+
+        function openScanner() {
+            document.getElementById('scannerModal').classList.remove('hidden');
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (id) => {
+                const student = students.find(s => s.id === id);
+                if(student) {
+                    html5QrcodeScanner.stop().then(() => {
+                        closeScanner();
+                        addPoints(id, 10);
+                        alert(`🎉 ${student.name} 출석! 10P 적립`);
+                    });
+                } else {
+                    alert("등록되지 않은 학생입니다.");
+                }
+            }).catch(() => { alert("카메라 권한을 허용해주세요."); closeScanner(); });
+        }
+        function closeScanner() {
+            document.getElementById('scannerModal').classList.add('hidden');
+            if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e=>e);
+        }
+    </script>
+</body>
+</html>
