@@ -5,63 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        body { font-family: 'Pretendard', -apple-system, sans-serif; background-color: #fffaf0; }
-        .tteokbokki-gradient { background: linear-gradient(135deg, #ff6b6b, #ff4757); }
-    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <style> body { font-family: 'Pretendard', sans-serif; background-color: #fffaf0; } </style>
 </head>
-<body class="p-4 flex flex-col items-center justify-center min-h-screen relative">
-
+<body class="p-4 flex flex-col items-center justify-center min-h-screen">
     <div class="bg-white rounded-3xl p-8 shadow-xl text-center w-full max-w-sm border-2 border-orange-100">
-        <div class="tteokbokki-gradient text-white rounded-xl p-3 mb-6 shadow-sm inline-block w-full">
+        <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6 shadow-sm">
             <h1 class="text-xl font-bold">🍡 내 떡볶이 패스</h1>
         </div>
         
-        <h2 class="text-3xl font-extrabold mb-2 text-gray-800" id="studentName">학생증</h2>
-        <p class="text-gray-500 mb-8 text-sm">출석할 때 선생님께 보여주세요!</p>
+        <h2 class="text-3xl font-extrabold mb-2" id="studentName">학생증</h2>
+        <p class="text-gray-500 mb-6 text-sm">출석할 때 보여주세요!</p>
         
-        <div id="qrcode" class="flex justify-center mb-8 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
+        <div id="qrcode" class="flex justify-center mb-6 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
         
-        <p class="text-xs text-gray-400 font-medium" id="instruction">선생님께 받은 링크로 접속해주세요.</p>
+        <div class="bg-orange-50 rounded-lg p-4 mb-4">
+            <p class="text-sm text-orange-800 font-bold mb-1">내 떡볶이 포인트</p>
+            <p class="text-3xl font-black text-orange-600" id="pointsDisplay">0 P</p>
+        </div>
     </div>
 
     <script>
-        // 1. 카카오톡 링크를 통해 들어온 데이터(이름, ID) 확인
-        const urlParams = new URLSearchParams(window.location.search);
-        const urlId = urlParams.get('id');
-        const urlName = urlParams.get('name');
+        const firebaseConfig = {
+            apiKey: "AIzaSyCgqbnQUuipS1iDMO7tUVgE-3L0c9SzbdY",
+            authDomain: "tteokbokki-373b3.firebaseapp.com",
+            databaseURL: "https://tteokbokki-373b3-default-rtdb.firebaseio.com",
+            projectId: "tteokbokki-373b3",
+            storageBucket: "tteokbokki-373b3.firebasestorage.app",
+            messagingSenderId: "117450022544",
+            appId: "1:117450022544:web:d93b193e236d3398218215"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        // 2. 링크에 데이터가 있다면 스마트폰에 찰칵 저장해두기 (다음 접속을 위해)
-        if (urlId && urlName) {
-            localStorage.setItem('my_pass_id', urlId);
-            localStorage.setItem('my_pass_name', urlName);
-            // 깔끔하게 주소창 뒤의 꼬리표 지우기
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('id')) {
+            localStorage.setItem('my_pass_id', urlParams.get('id'));
+            localStorage.setItem('my_pass_name', urlParams.get('name'));
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // 3. 내 스마트폰에 저장된 내 정보 불러오기
         const myId = localStorage.getItem('my_pass_id');
         const myName = localStorage.getItem('my_pass_name');
 
-        // 4. 정보가 있다면 화면에 내 이름과 QR코드 예쁘게 그리기
         if (myId && myName) {
             document.getElementById('studentName').innerText = myName;
-            document.getElementById('instruction').innerText = "이 화면을 [홈 화면에 추가] 해두면 편리해요!";
-            document.getElementById('qrcode').innerHTML = ''; // 초기화
-            new QRCode(document.getElementById("qrcode"), {
-                text: myId,
-                width: 200, height: 200,
-                colorDark : "#000000", colorLight : "#ffffff",
-                correctLevel : QRCode.CorrectLevel.H
+            new QRCode(document.getElementById("qrcode"), { text: myId, width: 200, height: 200 });
+
+            // 클라우드에서 실시간 포인트 수신
+            db.ref('students/' + myId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) document.getElementById('pointsDisplay').innerText = data.points + " P";
             });
-        } else {
-            document.getElementById('qrcode').innerHTML = "<span class='text-gray-400'>QR코드 없음</span>";
         }
     </script>
 </body>
