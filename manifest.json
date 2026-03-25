@@ -1,0 +1,13 @@
+{
+  "name": "떡볶이 패스",
+  "short_name": "떡볶이",
+  "start_url": ".",
+  "display": "standalone",
+  "icons": [
+    {
+      "src": "https://weongeun-na.github.io/tteokbokki/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ]
+}
