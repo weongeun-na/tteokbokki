@@ -241,27 +241,44 @@
         }
         function closeQrModal() { document.getElementById('qrModal').classList.add('hidden'); }
 
+        // ★ 에러 해결: 중복 스캔을 막고 한 번만 처리하도록 안전장치(isScanned) 추가! ★
         function openScanner() {
             document.getElementById('scannerModal').classList.remove('hidden');
             html5QrcodeScanner = new Html5Qrcode("reader");
+            let isScanned = false; // 중복 방지 자물쇠
+
             html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (id) => {
+                if (isScanned) return; // 이미 읽었으면 무시
+
                 const student = students.find(s => s.id === id);
                 if(student) {
-                    html5QrcodeScanner.stop().then(() => {
-                        closeScanner();
-                        const newPoints = student.points + 10;
-                        db.ref('students/' + id).update({ points: newPoints }).then(() => {
-                            alert(`🎉 ${student.name} 출석! 10P 적립`);
-                        });
+                    isScanned = true; // 자물쇠 잠금
+                    closeScanner(); // 카메라 즉시 끄기
+                    
+                    // 10점에서 500점으로 수정 완료!
+                    const newPoints = student.points + 500;
+                    db.ref('students/' + id).update({ points: newPoints }).then(() => {
+                        alert(`🎉 ${student.name} 출석 완료! 500P 적립`);
+                    }).catch(() => {
+                        alert("통신 오류가 발생했습니다. 다시 시도해주세요.");
                     });
                 } else {
-                    alert("등록되지 않은 학생입니다.");
+                    isScanned = true;
+                    closeScanner();
+                    alert("등록되지 않은 학생의 QR코드입니다.");
                 }
-            }).catch(() => { alert("카메라 권한을 허용해주세요."); closeScanner(); });
+            }).catch(() => { 
+                alert("카메라 권한을 허용해주세요."); 
+                closeScanner(); 
+            });
         }
+        
         function closeScanner() {
             document.getElementById('scannerModal').classList.add('hidden');
-            if(html5QrcodeScanner) html5QrcodeScanner.stop().catch(e=>e);
+            if(html5QrcodeScanner) {
+                html5QrcodeScanner.stop().catch(e=>console.log(e));
+                html5QrcodeScanner = null;
+            }
         }
     </script>
 </body>
