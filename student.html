@@ -4,10 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
-    
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=6">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=6">
-    
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=8">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,26 +13,68 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <style> body { font-family: 'Pretendard', sans-serif; background-color: #fffaf0; } </style>
+    <style> 
+        body { font-family: 'Pretendard', sans-serif; background-color: #fffaf0; }
+        /* 팝업창이 뿅! 하고 튀어나오는 애니메이션 */
+        .pop-animation { transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    </style>
 </head>
-<body class="p-4 flex flex-col items-center justify-center min-h-screen">
-    <div class="bg-white rounded-3xl p-8 shadow-xl text-center w-full max-w-sm border-2 border-orange-100">
-        <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6 shadow-sm">
-            <h1 class="text-xl font-bold">🍡 내 떡볶이 패스</h1>
+<body class="p-0 m-0 w-full min-h-screen relative overflow-hidden">
+
+    <div id="startOverlay" class="absolute inset-0 z-[100] bg-[#fffaf0] flex flex-col items-center justify-center p-6 text-center">
+        <div class="text-7xl mb-6 animate-bounce">🍡</div>
+        <h2 class="text-2xl font-black text-gray-800 mb-8">떡볶이 패스 준비완료!</h2>
+        <button onclick="startApp()" class="bg-red-500 active:bg-red-600 text-white font-bold text-xl py-5 px-10 rounded-full shadow-xl transition-transform transform active:scale-95 w-full max-w-sm">
+            👆 터치해서 학생증 열기
+        </button>
+        <p class="text-gray-400 text-sm mt-6 font-medium">터치해야 알림 소리가 켜져요!</p>
+    </div>
+
+    <div id="mainContent" class="hidden flex-col items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-3xl p-8 shadow-xl text-center w-full max-w-sm border-2 border-orange-100">
+            <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6 shadow-sm">
+                <h1 class="text-xl font-bold">🍡 내 떡볶이 패스</h1>
+            </div>
+            
+            <h2 class="text-3xl font-extrabold mb-2 text-gray-800" id="studentName">학생증</h2>
+            <p class="text-gray-500 mb-6 text-sm">출석할 때 보여주세요!</p>
+            
+            <div id="qrcode" class="flex justify-center mb-6 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
+            
+            <div class="bg-orange-50 rounded-2xl p-4 mb-2 transition-all duration-300" id="pointBox">
+                <p class="text-sm text-orange-800 font-bold mb-1">내 떡볶이 포인트</p>
+                <p class="text-4xl font-black text-orange-600 transition-all duration-300" id="pointsDisplay">0 P</p>
+            </div>
         </div>
-        
-        <h2 class="text-3xl font-extrabold mb-2" id="studentName">학생증</h2>
-        <p class="text-gray-500 mb-6 text-sm">출석할 때 보여주세요!</p>
-        
-        <div id="qrcode" class="flex justify-center mb-6 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
-        
-        <div class="bg-orange-50 rounded-lg p-4 mb-4">
-            <p class="text-sm text-orange-800 font-bold mb-1">내 떡볶이 포인트</p>
-            <p class="text-3xl font-black text-orange-600" id="pointsDisplay">0 P</p>
+    </div>
+
+    <div id="pointPopup" class="fixed inset-0 z-[200] bg-black bg-opacity-70 hidden flex items-center justify-center p-4 transition-opacity">
+        <div id="popupBox" class="bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 border-green-400 w-full max-w-xs">
+            <div class="text-6xl mb-4">🎉</div>
+            <h3 class="text-2xl font-black text-gray-800 mb-2">포인트 적립!</h3>
+            <p class="text-gray-500 text-sm mb-4">참 잘했어요 최고예요 👍</p>
+            <div class="bg-green-100 rounded-xl py-4">
+                <p id="popupAmount" class="text-5xl font-black text-green-600">+ 10 P</p>
+            </div>
         </div>
     </div>
 
     <script>
+        // 무료 '딩동' 알림 소리 준비
+        const dingSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+
+        function startApp() {
+            // 학생이 버튼을 누르면 소리를 잠깐 켰다 끄면서 스마트폰의 '소리 허락'을 받아냅니다.
+            dingSound.play().catch(()=>{});
+            dingSound.pause();
+            dingSound.currentTime = 0;
+
+            // 대문 화면을 숨기고 진짜 학생증을 보여줍니다.
+            document.getElementById('startOverlay').classList.add('hidden');
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('flex');
+        }
+
         const firebaseConfig = {
             apiKey: "AIzaSyCgqbnQUuipS1iDMO7tUVgE-3L0c9SzbdY",
             authDomain: "tteokbokki-373b3.firebaseapp.com",
@@ -47,30 +87,64 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
-        // 2. 바탕화면 앱이 길을 잃지 않도록, 주소창의 꼬리표를 절대 지우지 않습니다!
         const urlParams = new URLSearchParams(window.location.search);
-        let myId = urlParams.get('id');
-        let myName = urlParams.get('name');
+        let myId = urlParams.get('id') || localStorage.getItem('my_pass_id');
+        let myName = urlParams.get('name') || localStorage.getItem('my_pass_name');
 
         if (myId && myName) {
             localStorage.setItem('my_pass_id', myId);
             localStorage.setItem('my_pass_name', myName);
-        } else {
-            myId = localStorage.getItem('my_pass_id');
-            myName = localStorage.getItem('my_pass_name');
-        }
-
-        if (myId && myName) {
             document.getElementById('studentName').innerText = myName;
-            new QRCode(document.getElementById("qrcode"), { text: myId, width: 200, height: 200 });
+            new QRCode(document.getElementById("qrcode"), { text: myId, width: 180, height: 180 });
 
-            // 클라우드에서 실시간 포인트 수신
+            // 이전 점수를 기억할 변수
+            let previousPoints = null;
+
+            // 구름 서버(Firebase)에서 실시간으로 내 점수 감시하기
             db.ref('students/' + myId).on('value', (snapshot) => {
                 const data = snapshot.val();
                 if(data) {
-                    document.getElementById('pointsDisplay').innerText = data.points + " P";
-                } else {
-                    document.getElementById('pointsDisplay').innerText = "0 P";
+                    const newPoints = data.points;
+                    const display = document.getElementById('pointsDisplay');
+
+                    // 이전 점수보다 새 점수가 높아졌다면? (적립 발생!)
+                    if (previousPoints !== null && newPoints > previousPoints) {
+                        const earned = newPoints - previousPoints;
+                        
+                        // 1. 딩동 소리 재생
+                        dingSound.currentTime = 0;
+                        dingSound.play().catch(e => console.log(e));
+
+                        // 2. 팝업창 내용 바꾸고 화면에 띄우기
+                        document.getElementById('popupAmount').innerText = "+ " + earned + " P";
+                        const popup = document.getElementById('pointPopup');
+                        const popupBox = document.getElementById('popupBox');
+                        
+                        popup.classList.remove('hidden');
+                        // 살짝 시차를 주어 뿅! 커지는 애니메이션 실행
+                        setTimeout(() => popupBox.classList.remove('scale-0'), 50);
+
+                        // 3. 정확히 3초 뒤에 팝업창 숨기고 메인 합계 업데이트
+                        setTimeout(() => {
+                            popupBox.classList.add('scale-0'); // 다시 작아지기
+                            
+                            setTimeout(() => {
+                                popup.classList.add('hidden'); // 완전히 숨기기
+                                display.innerText = newPoints + " P"; // 합계 업데이트
+                                
+                                // 합계 숫자가 반짝이는 효과
+                                display.classList.add('text-green-500', 'scale-125');
+                                setTimeout(() => display.classList.remove('text-green-500', 'scale-125'), 400);
+                            }, 400); // 작아지는 애니메이션 기다리는 시간
+                        }, 3000); // 3초 대기
+
+                    } else {
+                        // 처음 접속했거나 점수가 깎였을 때는 팝업 없이 바로 합계만 보여줌
+                        display.innerText = newPoints + " P";
+                    }
+                    
+                    // 현재 점수를 '이전 점수'로 업데이트
+                    previousPoints = newPoints;
                 }
             });
         }
