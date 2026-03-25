@@ -4,13 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=10">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=10">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=11">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=11">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style> 
@@ -34,12 +33,9 @@
             <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6 shadow-sm">
                 <h1 class="text-xl font-bold">🍡 내 떡볶이 패스</h1>
             </div>
-            
             <h2 class="text-3xl font-extrabold mb-2 text-gray-800" id="studentName">학생증</h2>
             <p class="text-gray-500 mb-6 text-sm">출석할 때 보여주세요!</p>
-            
             <div id="qrcode" class="flex justify-center mb-6 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
-            
             <div class="bg-orange-50 rounded-2xl p-4 mb-2 transition-all duration-300" id="pointBox">
                 <p class="text-sm text-orange-800 font-bold mb-1">내 떡볶이 포인트</p>
                 <p class="text-4xl font-black text-orange-600 transition-all duration-300" id="pointsDisplay">0 P</p>
@@ -59,25 +55,20 @@
     </div>
 
     <script>
-        // 적립 소리와 차감 소리 두 개를 준비합니다.
         const earnSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
         const spendSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
 
         function startApp() {
-            try {
-                document.getElementById('startOverlay').classList.add('hidden');
-                document.getElementById('mainContent').classList.remove('hidden');
-                document.getElementById('mainContent').classList.add('flex');
+            // ★ 무조건 화면부터 강제로 넘깁니다! ★
+            document.getElementById('startOverlay').style.display = 'none';
+            document.getElementById('mainContent').classList.remove('hidden');
+            document.getElementById('mainContent').classList.add('flex');
 
-                // 스마트폰의 허락을 받기 위해 두 소리를 모두 잠깐 켰다 끕니다.
-                let p1 = earnSound.play();
-                if (p1 !== undefined) p1.then(() => { earnSound.pause(); earnSound.currentTime = 0; }).catch(()=>{});
-                
-                let p2 = spendSound.play();
-                if (p2 !== undefined) p2.then(() => { spendSound.pause(); spendSound.currentTime = 0; }).catch(()=>{});
-            } catch(e) {
-                alert("화면 넘김 오류: " + e.message);
-            }
+            // 화면이 안전하게 넘어간 뒤 소리 권한을 조용히 요청합니다.
+            setTimeout(() => {
+                earnSound.play().then(() => earnSound.pause()).catch(e => e);
+                spendSound.play().then(() => spendSound.pause()).catch(e => e);
+            }, 100);
         }
 
         const firebaseConfig = {
@@ -91,5 +82,3 @@
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
-
-        const urlParams = new
