@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=11">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=11">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=20">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=20">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -19,31 +19,36 @@
 </head>
 <body class="p-0 m-0 w-full min-h-screen relative overflow-hidden">
 
+    <div id="errorLog" class="fixed top-0 left-0 w-full bg-red-600 text-white text-sm font-bold p-3 z-[999]" style="display: none;"></div>
+
     <div id="startOverlay" class="absolute inset-0 z-[100] bg-[#fffaf0] flex flex-col items-center justify-center p-6 text-center">
         <div class="text-7xl mb-6 animate-bounce">🍡</div>
         <h2 class="text-2xl font-black text-gray-800 mb-8">떡볶이 패스 준비완료!</h2>
-        <button onclick="startApp()" class="bg-red-500 active:bg-red-600 text-white font-bold text-xl py-5 px-10 rounded-full shadow-xl transition-transform transform active:scale-95 w-full max-w-sm">
+        <button onclick="startApp()" class="bg-red-500 active:bg-red-600 text-white font-bold text-xl py-5 px-10 rounded-full shadow-xl w-full max-w-sm">
             👆 터치해서 학생증 열기
         </button>
         <p class="text-gray-400 text-sm mt-6 font-medium">터치해야 알림 소리가 켜져요!</p>
     </div>
 
-    <div id="mainContent" class="hidden flex-col items-center justify-center min-h-screen p-4">
+    <div id="mainContent" style="display: none;" class="flex-col items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-3xl p-8 shadow-xl text-center w-full max-w-sm border-2 border-orange-100">
             <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6 shadow-sm">
                 <h1 class="text-xl font-bold">🍡 내 떡볶이 패스</h1>
             </div>
+            
             <h2 class="text-3xl font-extrabold mb-2 text-gray-800" id="studentName">학생증</h2>
             <p class="text-gray-500 mb-6 text-sm">출석할 때 보여주세요!</p>
+            
             <div id="qrcode" class="flex justify-center mb-6 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
-            <div class="bg-orange-50 rounded-2xl p-4 mb-2 transition-all duration-300" id="pointBox">
+            
+            <div class="bg-orange-50 rounded-2xl p-4 mb-2 transition-all duration-300">
                 <p class="text-sm text-orange-800 font-bold mb-1">내 떡볶이 포인트</p>
                 <p class="text-4xl font-black text-orange-600 transition-all duration-300" id="pointsDisplay">0 P</p>
             </div>
         </div>
     </div>
 
-    <div id="pointPopup" class="fixed inset-0 z-[200] bg-black bg-opacity-70 hidden flex items-center justify-center p-4 transition-opacity">
+    <div id="pointPopup" style="display: none;" class="fixed inset-0 z-[200] bg-black bg-opacity-70 flex items-center justify-center p-4 transition-opacity">
         <div id="popupBox" class="bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 w-full max-w-xs">
             <div id="popupEmoji" class="text-6xl mb-4">🎉</div>
             <h3 id="popupTitle" class="text-2xl font-black text-gray-800 mb-2">포인트!</h3>
@@ -55,20 +60,31 @@
     </div>
 
     <script>
-        const earnSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
-        const spendSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
+        // 에러를 화면에 즉시 띄우는 마법의 코드
+        window.onerror = function(msg, url, line) {
+            const errLog = document.getElementById('errorLog');
+            errLog.style.display = 'block';
+            errLog.innerHTML = "오류: " + msg + " (줄: " + line + ")";
+            return false;
+        };
+
+        // 소리를 미리 불러오지 않고, 빈 그릇만 만들어 둡니다.
+        let earnSound = null;
+        let spendSound = null;
 
         function startApp() {
-            // ★ 무조건 화면부터 강제로 넘깁니다! ★
+            // 1. 무슨 일이 있어도 화면부터 강제로 바꿉니다! (가장 중요)
             document.getElementById('startOverlay').style.display = 'none';
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('mainContent').classList.add('flex');
+            document.getElementById('mainContent').style.display = 'flex';
 
-            // 화면이 안전하게 넘어간 뒤 소리 권한을 조용히 요청합니다.
-            setTimeout(() => {
-                earnSound.play().then(() => earnSound.pause()).catch(e => e);
-                spendSound.play().then(() => spendSound.pause()).catch(e => e);
-            }, 100);
+            // 2. 화면이 무사히 넘어오면, 그제야 소리 파일을 몰래 다운받고 허락을 구합니다.
+            if (!earnSound) {
+                earnSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+                spendSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
+                
+                earnSound.play().then(() => earnSound.pause()).catch(e => console.log("소리대기"));
+                spendSound.play().then(() => spendSound.pause()).catch(e => console.log("소리대기"));
+            }
         }
 
         const firebaseConfig = {
@@ -82,3 +98,66 @@
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        let myId = urlParams.get('id') || localStorage.getItem('my_pass_id');
+        let myName = urlParams.get('name') || localStorage.getItem('my_pass_name');
+
+        if (myId && myName) {
+            localStorage.setItem('my_pass_id', myId);
+            localStorage.setItem('my_pass_name', myName);
+            document.getElementById('studentName').innerText = myName;
+            new QRCode(document.getElementById("qrcode"), { text: myId, width: 180, height: 180 });
+
+            let previousPoints = null;
+
+            db.ref('students/' + myId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                if(data) {
+                    const newPoints = data.points;
+                    const display = document.getElementById('pointsDisplay');
+                    const popup = document.getElementById('pointPopup');
+                    const popupBox = document.getElementById('popupBox');
+
+                    if (previousPoints !== null && newPoints !== previousPoints) {
+                        if (newPoints > previousPoints) {
+                            if(earnSound) { earnSound.currentTime = 0; earnSound.play().catch(e=>e); }
+                            document.getElementById('popupEmoji').innerText = "🎉";
+                            document.getElementById('popupTitle').innerText = "포인트 적립!";
+                            document.getElementById('popupMessage').innerText = "참 잘했어요 최고예요 👍";
+                            document.getElementById('popupAmount').innerText = "+ " + (newPoints - previousPoints) + " P";
+                            document.getElementById('popupAmount').className = "text-5xl font-black text-green-600";
+                            popupBox.className = "bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 border-green-400 w-full max-w-xs";
+                        } else if (newPoints < previousPoints) {
+                            if(spendSound) { spendSound.currentTime = 0; spendSound.play().catch(e=>e); }
+                            document.getElementById('popupEmoji').innerText = "🎁";
+                            document.getElementById('popupTitle').innerText = "포인트 사용!";
+                            document.getElementById('popupMessage').innerText = "맛있는 선물 교환 완료 😋";
+                            document.getElementById('popupAmount').innerText = "- " + (previousPoints - newPoints) + " P";
+                            document.getElementById('popupAmount').className = "text-5xl font-black text-orange-500";
+                            popupBox.className = "bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 border-orange-400 w-full max-w-xs";
+                        }
+                        
+                        popup.style.display = 'flex';
+                        setTimeout(() => popupBox.classList.remove('scale-0'), 50);
+
+                        setTimeout(() => {
+                            popupBox.classList.add('scale-0');
+                            setTimeout(() => {
+                                popup.style.display = 'none';
+                                display.innerText = newPoints + " P";
+                                display.classList.add('scale-125');
+                                setTimeout(() => display.classList.remove('scale-125'), 400);
+                            }, 400);
+                        }, 3000);
+
+                    } else {
+                        display.innerText = newPoints + " P";
+                    }
+                    previousPoints = newPoints;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
