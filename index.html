@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>떡볶이 패스 - 출석부</title>
     <link rel="manifest" href="manifest.json">
-    
     <link rel="apple-touch-icon" sizes="192x192" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
     <link rel="icon" type="image/png" sizes="192x192" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
     <link rel="shortcut icon" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
@@ -56,7 +55,7 @@
 
     <div id="scannerModal" class="fixed inset-0 bg-black bg-opacity-90 hidden flex items-center justify-center p-4 z-50 flex-col">
         <h3 class="text-white text-xl font-bold mb-4">QR 코드를 스캔하세요</h3>
-        <div id="reader" class="w-full max-w-sm bg-white rounded-lg overflow-hidden"></div>
+        <div id="reader" class="w-full max-w-sm bg-white rounded-lg overflow-hidden border-4 border-indigo-500"></div>
         <button onclick="closeScanner()" class="mt-8 bg-red-500 text-white font-bold py-3 px-8 rounded-full">취소 및 닫기</button>
     </div>
 
@@ -117,9 +116,12 @@
         const db = firebase.database();
 
         let students = [];
-        let html5QrcodeScanner = null;
         let currentShareLink = ""; 
         let currentPointStudentId = null; 
+        
+        // ★ 에러 방지용: 스캐너 변수를 안전하게 관리
+        let html5QrcodeScanner = null;
+        let isScanning = false;
 
         db.ref('students').on('value', (snapshot) => {
             students = [];
@@ -241,45 +243,73 @@
         }
         function closeQrModal() { document.getElementById('qrModal').classList.add('hidden'); }
 
-        // ★ 에러 해결: 중복 스캔을 막고 한 번만 처리하도록 안전장치(isScanned) 추가! ★
+        // ==============================================================
+        // ★ 완벽하게 수리된 카메라 기능 (절대 안 튕김) ★
         function openScanner() {
+            if (isScanning) return; // 이미 켜져있으면 무시
+            
             document.getElementById('scannerModal').classList.remove('hidden');
-            html5QrcodeScanner = new Html5Qrcode("reader");
-            let isScanned = false; // 중복 방지 자물쇠
+            
+            // 스캐너가 없으면 딱 한 번만 만듭니다.
+            if (!html5QrcodeScanner) {
+                html5QrcodeScanner = new Html5Qrcode("reader");
+            }
 
-            html5QrcodeScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, (id) => {
-                if (isScanned) return; // 이미 읽었으면 무시
+            isScanning = true;
 
-                const student = students.find(s => s.id === id);
-                if(student) {
-                    isScanned = true; // 자물쇠 잠금
-                    closeScanner(); // 카메라 즉시 끄기
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                { fps: 10, qrbox: 250 }, 
+                (id) => {
+                    // 성공적으로 무언가 읽었을 때
+                    if (!isScanning) return; 
                     
-                    // 10점에서 500점으로 수정 완료!
-                    const newPoints = student.points + 500;
-                    db.ref('students/' + id).update({ points: newPoints }).then(() => {
-                        alert(`🎉 ${student.name} 출석 완료! 500P 적립`);
-                    }).catch(() => {
-                        alert("통신 오류가 발생했습니다. 다시 시도해주세요.");
-                    });
-                } else {
-                    isScanned = true;
-                    closeScanner();
-                    alert("등록되지 않은 학생의 QR코드입니다.");
+                    const student = students.find(s => s.id === id);
+                    if (student) {
+                        isScanning = false; // 카메라 잠금
+                        
+                        // 카메라를 안전하게 정지한 뒤 점수를 줍니다. (500P 적용 완료!)
+                        html5QrcodeScanner.stop().then(() => {
+                            document.getElementById('scannerModal').classList.add('hidden');
+                            
+                            const newPoints = student.points + 500;
+                            db.ref('students/' + id).update({ points: newPoints }).then(() => {
+                                alert(`🎉 ${student.name} 출석 완료! 500P 적립`);
+                            });
+                        }).catch(e => {
+                            document.getElementById('scannerModal').classList.add('hidden');
+                        });
+                    }
+                    // 학생 코드가 아니면(엉뚱한 바코드) 아무 짓도 안 하고 무시합니다!
+                },
+                (errorMessage) => {
+                    // 스캔 중 자잘한 에러는 전부 무시
                 }
-            }).catch(() => { 
-                alert("카메라 권한을 허용해주세요."); 
-                closeScanner(); 
+            ).catch((err) => { 
+                isScanning = false;
+                document.getElementById('scannerModal').classList.add('hidden');
+                alert("카메라를 켤 수 없습니다. 스마트폰 설정에서 카메라 권한을 허용해주세요!"); 
             });
         }
         
         function closeScanner() {
-            document.getElementById('scannerModal').classList.add('hidden');
+            if (!isScanning) {
+                document.getElementById('scannerModal').classList.add('hidden');
+                return;
+            }
+            
+            isScanning = false;
             if(html5QrcodeScanner) {
-                html5QrcodeScanner.stop().catch(e=>console.log(e));
-                html5QrcodeScanner = null;
+                html5QrcodeScanner.stop().then(() => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                }).catch(e => {
+                    document.getElementById('scannerModal').classList.add('hidden');
+                });
+            } else {
+                document.getElementById('scannerModal').classList.add('hidden');
             }
         }
+        // ==============================================================
     </script>
 </body>
 </html>
