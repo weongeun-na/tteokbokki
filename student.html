@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=20">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=20">
+    
+    <link rel="apple-touch-icon" sizes="192x192" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
+    <link rel="shortcut icon" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +63,6 @@
     </div>
 
     <script>
-        // 에러를 화면에 즉시 띄우는 마법의 코드
         window.onerror = function(msg, url, line) {
             const errLog = document.getElementById('errorLog');
             errLog.style.display = 'block';
@@ -68,22 +70,19 @@
             return false;
         };
 
-        // 소리를 미리 불러오지 않고, 빈 그릇만 만들어 둡니다.
         let earnSound = null;
         let spendSound = null;
 
         function startApp() {
-            // 1. 무슨 일이 있어도 화면부터 강제로 바꿉니다! (가장 중요)
             document.getElementById('startOverlay').style.display = 'none';
             document.getElementById('mainContent').style.display = 'flex';
 
-            // 2. 화면이 무사히 넘어오면, 그제야 소리 파일을 몰래 다운받고 허락을 구합니다.
             if (!earnSound) {
                 earnSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
                 spendSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
                 
-                earnSound.play().then(() => earnSound.pause()).catch(e => console.log("소리대기"));
-                spendSound.play().then(() => spendSound.pause()).catch(e => console.log("소리대기"));
+                earnSound.play().then(() => earnSound.pause()).catch(e => e);
+                spendSound.play().then(() => spendSound.pause()).catch(e => e);
             }
         }
 
