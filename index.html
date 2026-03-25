@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>떡볶이 패스 - 출석부</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=8">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=8">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=9">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=9">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -73,9 +73,9 @@
                     <button onclick="changePoints(10, '🏃 일반 출석')" class="bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-semibold py-2 rounded-lg text-sm active:scale-95 transition">🏃 일반 출석 (+10)</button>
                 </div>
                 
-                <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                    <input type="number" id="customAddInput" placeholder="직접 입력 (예: 15)" class="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-green-400">
-                    <button onclick="addCustomPoints()" class="bg-green-500 text-white font-bold py-3 px-6 rounded-xl text-base active:bg-green-600 transition shadow-sm whitespace-nowrap">적립</button>
+                <div class="flex flex-row items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                    <input type="number" id="customAddInput" placeholder="직접 입력 (예: 15)" class="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-green-400">
+                    <button onclick="addCustomPoints()" class="shrink-0 bg-green-500 text-white font-bold py-2.5 px-5 rounded-xl text-base active:bg-green-600 transition shadow-sm">적립</button>
                 </div>
             </div>
 
@@ -88,9 +88,9 @@
                     <button onclick="changePoints(-100, '🎁 특별 선물')" class="bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 font-semibold py-2 rounded-lg text-sm active:scale-95 transition">🎁 특별 선물 (-100)</button>
                 </div>
 
-                <div class="flex gap-2 mt-4 pt-4 border-t border-gray-100">
-                    <input type="number" id="customDeductInput" placeholder="직접 입력 (예: 25)" class="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-orange-400">
-                    <button onclick="deductCustomPoints()" class="bg-orange-500 text-white font-bold py-3 px-6 rounded-xl text-base active:bg-orange-600 transition shadow-sm whitespace-nowrap">차감</button>
+                <div class="flex flex-row items-center gap-2 mt-4 pt-4 border-t border-gray-100">
+                    <input type="number" id="customDeductInput" placeholder="직접 입력 (예: 25)" class="flex-1 min-w-0 border border-gray-300 rounded-xl px-3 py-2.5 text-base focus:outline-none focus:border-orange-400">
+                    <button onclick="deductCustomPoints()" class="shrink-0 bg-orange-500 text-white font-bold py-2.5 px-5 rounded-xl text-base active:bg-orange-600 transition shadow-sm">차감</button>
                 </div>
             </div>
 
