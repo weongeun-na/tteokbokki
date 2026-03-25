@@ -7,8 +7,10 @@
     <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=9">
     <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=9">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style> 
@@ -21,7 +23,7 @@
     <div id="startOverlay" class="absolute inset-0 z-[100] bg-[#fffaf0] flex flex-col items-center justify-center p-6 text-center">
         <div class="text-7xl mb-6 animate-bounce">🍡</div>
         <h2 class="text-2xl font-black text-gray-800 mb-8">떡볶이 패스 준비완료!</h2>
-        <button onclick="startApp()" class="bg-red-500 text-white font-bold text-xl py-5 px-10 rounded-full w-full max-w-sm">
+        <button onclick="startApp()" class="bg-red-500 active:bg-red-600 text-white font-bold text-xl py-5 px-10 rounded-full shadow-xl transition-transform transform active:scale-95 w-full max-w-sm">
             👆 터치해서 학생증 열기
         </button>
         <p class="text-gray-400 text-sm mt-6 font-medium">터치해야 알림 소리가 켜져요!</p>
@@ -29,11 +31,13 @@
 
     <div id="mainContent" class="hidden flex-col items-center justify-center min-h-screen p-4">
         <div class="bg-white rounded-3xl p-8 shadow-xl text-center w-full max-w-sm border-2 border-orange-100">
-            <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6">
+            <div class="bg-gradient-to-r from-red-400 to-red-500 text-white rounded-xl p-3 mb-6 shadow-sm">
                 <h1 class="text-xl font-bold">🍡 내 떡볶이 패스</h1>
             </div>
-            <h2 class="text-3xl font-extrabold mb-2" id="studentName">학생증</h2>
+            
+            <h2 class="text-3xl font-extrabold mb-2 text-gray-800" id="studentName">학생증</h2>
             <p class="text-gray-500 mb-6 text-sm">출석할 때 보여주세요!</p>
+            
             <div id="qrcode" class="flex justify-center mb-6 p-4 bg-white rounded-2xl border-4 border-dashed border-red-200"></div>
             
             <div class="bg-orange-50 rounded-2xl p-4 mb-2 transition-all duration-300" id="pointBox">
@@ -44,27 +48,37 @@
     </div>
 
     <div id="pointPopup" class="fixed inset-0 z-[200] bg-black bg-opacity-70 hidden flex items-center justify-center p-4 transition-opacity">
-        <div id="popupBox" class="bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 w-full max-w-xs">
-            <div id="popupIcon" class="text-6xl mb-4">🎉</div>
-            <h3 id="popupTitle" class="text-2xl font-black text-gray-800 mb-2"></h3>
-            <p id="popupDesc" class="text-gray-500 text-sm mb-4"></p>
-            <div id="popupAmountBox" class="rounded-xl py-4">
-                <p id="popupAmount" class="text-5xl font-black"></p>
+        <div id="popupBox" class="bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 border-green-400 w-full max-w-xs">
+            <div class="text-6xl mb-4">🎉</div>
+            <h3 class="text-2xl font-black text-gray-800 mb-2">포인트 적립!</h3>
+            <p class="text-gray-500 text-sm mb-4">참 잘했어요 최고예요 👍</p>
+            <div class="bg-green-100 rounded-xl py-4">
+                <p id="popupAmount" class="text-5xl font-black text-green-600">+ 10 P</p>
             </div>
         </div>
     </div>
 
     <script>
-        // 경쾌한 적립 소리와 귀여운 차감 소리
-        const earnSound = new Audio("https://assets.mixkit.co/active_storage/sfx/1435/1435-preview.mp3");
-        const deductSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3");
+        const dingSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
 
         function startApp() {
-            earnSound.play().catch(()=>{}); earnSound.pause(); earnSound.currentTime = 0;
-            deductSound.play().catch(()=>{}); deductSound.pause(); deductSound.currentTime = 0;
-            document.getElementById('startOverlay').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('mainContent').classList.add('flex');
+            try {
+                // 무조건 화면부터 먼저 숨기고 넘깁니다! (에러 방지)
+                document.getElementById('startOverlay').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                document.getElementById('mainContent').classList.add('flex');
+
+                // 그 다음 소리를 몰래 켰다 끕니다.
+                let playPromise = dingSound.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        dingSound.pause();
+                        dingSound.currentTime = 0;
+                    }).catch(error => { console.log("소리 권한 대기중"); });
+                }
+            } catch(e) {
+                alert("화면 넘김 오류: " + e.message);
+            }
         }
 
         const firebaseConfig = {
@@ -97,10 +111,36 @@
                     const newPoints = data.points;
                     const display = document.getElementById('pointsDisplay');
 
-                    if (previousPoints !== null && newPoints !== previousPoints) {
-                        const diff = newPoints - previousPoints;
-                        const isEarn = diff > 0;
+                    if (previousPoints !== null && newPoints > previousPoints) {
+                        const earned = newPoints - previousPoints;
+                        
+                        dingSound.currentTime = 0;
+                        dingSound.play().catch(e => console.log("소리 재생 실패"));
 
-                        if (isEarn) {
-                            earnSound.currentTime = 0; earnSound.play().catch(e=>e);
-                            document.
+                        document.getElementById('popupAmount').innerText = "+ " + earned + " P";
+                        const popup = document.getElementById('pointPopup');
+                        const popupBox = document.getElementById('popupBox');
+                        
+                        popup.classList.remove('hidden');
+                        setTimeout(() => popupBox.classList.remove('scale-0'), 50);
+
+                        setTimeout(() => {
+                            popupBox.classList.add('scale-0');
+                            setTimeout(() => {
+                                popup.classList.add('hidden');
+                                display.innerText = newPoints + " P";
+                                display.classList.add('text-green-500', 'scale-125');
+                                setTimeout(() => display.classList.remove('text-green-500', 'scale-125'), 400);
+                            }, 400);
+                        }, 3000);
+
+                    } else {
+                        display.innerText = newPoints + " P";
+                    }
+                    previousPoints = newPoints;
+                }
+            });
+        }
+    </script>
+</body>
+</html>
