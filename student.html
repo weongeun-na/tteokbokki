@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>내 떡볶이 패스</title>
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=9">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=9">
+    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=10">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=10">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -48,34 +48,33 @@
     </div>
 
     <div id="pointPopup" class="fixed inset-0 z-[200] bg-black bg-opacity-70 hidden flex items-center justify-center p-4 transition-opacity">
-        <div id="popupBox" class="bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 border-green-400 w-full max-w-xs">
-            <div class="text-6xl mb-4">🎉</div>
-            <h3 class="text-2xl font-black text-gray-800 mb-2">포인트 적립!</h3>
-            <p class="text-gray-500 text-sm mb-4">참 잘했어요 최고예요 👍</p>
-            <div class="bg-green-100 rounded-xl py-4">
-                <p id="popupAmount" class="text-5xl font-black text-green-600">+ 10 P</p>
+        <div id="popupBox" class="bg-white rounded-[2rem] p-8 text-center transform scale-0 pop-animation shadow-2xl border-4 w-full max-w-xs">
+            <div id="popupEmoji" class="text-6xl mb-4">🎉</div>
+            <h3 id="popupTitle" class="text-2xl font-black text-gray-800 mb-2">포인트!</h3>
+            <p id="popupMessage" class="text-gray-500 text-sm mb-4">메시지</p>
+            <div class="bg-gray-50 rounded-xl py-4">
+                <p id="popupAmount" class="text-5xl font-black text-green-600">0 P</p>
             </div>
         </div>
     </div>
 
     <script>
-        const dingSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        // 적립 소리와 차감 소리 두 개를 준비합니다.
+        const earnSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3");
+        const spendSound = new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3");
 
         function startApp() {
             try {
-                // 무조건 화면부터 먼저 숨기고 넘깁니다! (에러 방지)
                 document.getElementById('startOverlay').classList.add('hidden');
                 document.getElementById('mainContent').classList.remove('hidden');
                 document.getElementById('mainContent').classList.add('flex');
 
-                // 그 다음 소리를 몰래 켰다 끕니다.
-                let playPromise = dingSound.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        dingSound.pause();
-                        dingSound.currentTime = 0;
-                    }).catch(error => { console.log("소리 권한 대기중"); });
-                }
+                // 스마트폰의 허락을 받기 위해 두 소리를 모두 잠깐 켰다 끕니다.
+                let p1 = earnSound.play();
+                if (p1 !== undefined) p1.then(() => { earnSound.pause(); earnSound.currentTime = 0; }).catch(()=>{});
+                
+                let p2 = spendSound.play();
+                if (p2 !== undefined) p2.then(() => { spendSound.pause(); spendSound.currentTime = 0; }).catch(()=>{});
             } catch(e) {
                 alert("화면 넘김 오류: " + e.message);
             }
@@ -93,54 +92,4 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database();
 
-        const urlParams = new URLSearchParams(window.location.search);
-        let myId = urlParams.get('id') || localStorage.getItem('my_pass_id');
-        let myName = urlParams.get('name') || localStorage.getItem('my_pass_name');
-
-        if (myId && myName) {
-            localStorage.setItem('my_pass_id', myId);
-            localStorage.setItem('my_pass_name', myName);
-            document.getElementById('studentName').innerText = myName;
-            new QRCode(document.getElementById("qrcode"), { text: myId, width: 180, height: 180 });
-
-            let previousPoints = null;
-
-            db.ref('students/' + myId).on('value', (snapshot) => {
-                const data = snapshot.val();
-                if(data) {
-                    const newPoints = data.points;
-                    const display = document.getElementById('pointsDisplay');
-
-                    if (previousPoints !== null && newPoints > previousPoints) {
-                        const earned = newPoints - previousPoints;
-                        
-                        dingSound.currentTime = 0;
-                        dingSound.play().catch(e => console.log("소리 재생 실패"));
-
-                        document.getElementById('popupAmount').innerText = "+ " + earned + " P";
-                        const popup = document.getElementById('pointPopup');
-                        const popupBox = document.getElementById('popupBox');
-                        
-                        popup.classList.remove('hidden');
-                        setTimeout(() => popupBox.classList.remove('scale-0'), 50);
-
-                        setTimeout(() => {
-                            popupBox.classList.add('scale-0');
-                            setTimeout(() => {
-                                popup.classList.add('hidden');
-                                display.innerText = newPoints + " P";
-                                display.classList.add('text-green-500', 'scale-125');
-                                setTimeout(() => display.classList.remove('text-green-500', 'scale-125'), 400);
-                            }, 400);
-                        }, 3000);
-
-                    } else {
-                        display.innerText = newPoints + " P";
-                    }
-                    previousPoints = newPoints;
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+        const urlParams = new
