@@ -5,8 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>떡볶이 패스 - 출석부</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" sizes="192x192" href="icon.png?v=9">
-    <link rel="icon" type="image/png" sizes="192x192" href="icon.png?v=9">
+    
+    <link rel="apple-touch-icon" sizes="192x192" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
+    <link rel="shortcut icon" href="https://weongeun-na.github.io/tteokbokki/icon.png?v=100">
+    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -206,18 +209,16 @@
             document.getElementById('customDeductInput').value = '';
         }
 
-        // ★ 새로 추가된 학생 삭제 기능 ★
         function deleteStudent() {
             if (!currentPointStudentId) return;
             const student = students.find(s => s.id === currentPointStudentId);
             if (!student) return;
 
-            // 실수로 누르는 것을 방지하기 위해 팝업으로 경고합니다.
             if (confirm(`정말 [${student.name}] 학생을 삭제하시겠습니까?\n(삭제하면 복구할 수 없습니다!)`)) {
                 db.ref('students/' + currentPointStudentId).remove()
                   .then(() => {
                       alert(`${student.name} 학생이 목록에서 삭제되었습니다.`);
-                      closePointModal(); // 삭제 후 팝업 닫기
+                      closePointModal(); 
                   })
                   .catch((error) => {
                       alert("삭제 실패! 인터넷 연결을 확인해주세요.");
